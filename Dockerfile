@@ -48,4 +48,4 @@ ENV SPRING_PROFILES_ACTIVE=prod \
 
 # Comando para executar a aplicação com dumb-init para melhor manejo de sinais
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["sh", "-c", "java $JAVA_OPTS -Dserver.port=${PORT:-8080} -jar app.jar"]
+CMD ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=prod -Dserver.port=${PORT:-8080} -jar app.jar"]

@@ -23,4 +23,4 @@ echo "🔧 Profile ativo: $SPRING_PROFILES_ACTIVE"
 echo "🌐 Porta: $SERVER_PORT"
 
 # Iniciar aplicação
-exec java $JAVA_OPTS -Dserver.port=$SERVER_PORT -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE -jar "$JAR_FILE"
+exec java $JAVA_OPTS -Dspring.profiles.active=prod -Dserver.port=$SERVER_PORT -jar "$JAR_FILE"

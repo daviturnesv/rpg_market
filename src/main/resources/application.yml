@@ -1,0 +1,22 @@
+# Configuração base compartilhada entre perfis
+spring.application.name=rpg_market
+server.error.whitelabel.enabled=false
+
+# Configuração Thymeleaf
+spring.thymeleaf.prefix=classpath:/templates/
+spring.thymeleaf.suffix=.html
+spring.thymeleaf.mode=HTML
+spring.thymeleaf.encoding=UTF-8
+
+# Configuração de Upload de Arquivos
+spring.servlet.multipart.enabled=true
+spring.servlet.multipart.file-size-threshold=2KB
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+
+# Configuração do MongoDB padrão (será sobrescrito em produção)
+spring.data.mongodb.database=Cluster0
+spring.data.mongodb.uri=mongodb+srv://admin:batata123@cluster0.clcxyly.mongodb.net/?
+
+# Configuração do diretório de upload padrão
+app.upload.dir=uploads/images
