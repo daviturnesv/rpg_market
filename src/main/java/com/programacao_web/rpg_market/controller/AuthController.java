@@ -61,21 +61,21 @@ public class AuthController {
             Optional<User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
-                log.info("User found in database: {}", user.getUsername());
-                log.info("User password hash (first 10 chars): {}...", user.getPassword().substring(0, Math.min(10, user.getPassword().length())));
-                log.info("User role: {}", user.getRole());
+                log.info("Usuário encontrado no banco de dados: {}", user.getUsername());
+                log.info("Hash da senha do usuário (primeiros 10 caracteres): {}...", user.getPassword().substring(0, Math.min(10, user.getPassword().length())));
+                log.info("Papel do usuário: {}", user.getRole());
                 
                 // Testar se a senha fornecida bate com o hash
                 boolean passwordMatches = passwordEncoder.matches(password, user.getPassword());
-                log.info("Password matches: {}", passwordMatches);
+                log.info("Senha confere: {}", passwordMatches);
                 
                 if (!passwordMatches) {
-                    log.error("Password does not match for user: {}", username);
+                    log.error("Senha não confere para o usuário: {}", username);
                     model.addAttribute("error", "Senha incorreta!");
                     return "user/login";
                 }
             } else {
-                log.error("User not found in database: {}", username);
+                log.error("Usuário não encontrado no banco de dados: {}", username);
                 model.addAttribute("error", "Usuário não encontrado!");
                 return "user/login";
             }

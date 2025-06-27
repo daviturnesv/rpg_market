@@ -38,7 +38,7 @@ public class FileStorageService {
             return null;
         }
         
-        // Generate unique filename
+        // Gerar nome de arquivo único
         String originalFilename = file.getOriginalFilename();
         String fileExtension = "";
         
@@ -50,29 +50,29 @@ public class FileStorageService {
         Path targetLocation = this.fileStorageLocation.resolve(filename);
         
         try {
-            // Ensure parent directories exist
+            // Garantir que os diretórios pai existam
             Files.createDirectories(targetLocation.getParent());
             
-            // Copy file to the target location
+            // Copiar arquivo para o local de destino
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-            log.info("File stored successfully at: {}", targetLocation);
+            log.info("Arquivo armazenado com sucesso em: {}", targetLocation);
             
             return filename;
         } catch (IOException ex) {
-            log.error("Could not store file: {}", ex.getMessage(), ex);
+            log.error("Não foi possível armazenar arquivo: {}", ex.getMessage(), ex);
             throw new IOException("Não foi possível armazenar o arquivo. Por favor, tente novamente!", ex);
         }
     }
     
     /**
-     * Returns the Path for a specific file
+     * Retorna o caminho para um arquivo específico
      */
     public Path getFilePath(String fileName) {
         return this.fileStorageLocation.resolve(fileName);
     }
     
     /**
-     * Delete a file from storage
+     * Excluir um arquivo do armazenamento
      */
     public boolean deleteFile(String fileName) {
         try {
@@ -83,7 +83,7 @@ public class FileStorageService {
             }
             return false;
         } catch (Exception e) {
-            log.error("Could not delete file: {}", e.getMessage());
+            log.error("Não foi possível excluir arquivo: {}", e.getMessage());
             return false;
         }
     }
@@ -108,7 +108,7 @@ public class FileStorageService {
         // Salvar o arquivo
         Files.write(targetLocation, imageBytes);
         
-        log.info("Base64 image stored successfully at: {}", targetLocation);
+        log.info("Imagem Base64 armazenada com sucesso em: {}", targetLocation);
         return filename;
     }
     
@@ -117,7 +117,7 @@ public class FileStorageService {
      */
     public String storeAndResizeImage(MultipartFile file, int width, int height) throws IOException {
         if (file == null || file.isEmpty()) {
-            log.warn("Attempted to store empty or null file");
+            log.warn("Tentativa de armazenar arquivo vazio ou nulo");
             return null;
         }
         
@@ -138,7 +138,7 @@ public class FileStorageService {
         File outputFile = targetLocation.toFile();
         ImageIO.write(resizedImage, "jpg", outputFile);
         
-        log.info("Resized image stored successfully at: {}", targetLocation);
+        log.info("Imagem redimensionada armazenada com sucesso em: {}", targetLocation);
         return filename;
     }
     

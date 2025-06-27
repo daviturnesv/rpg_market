@@ -181,7 +181,7 @@ public class CheckoutController {
             @AuthenticationPrincipal UserDetails currentUser,
             RedirectAttributes redirectAttributes) {
           try {
-            log.info("Confirm purchase request: productId={}, bidAmount={}, confirmPurchase={}", 
+            log.info("Solicitação de confirmação de compra: produtoId={}, valorLance={}, confirmarCompra={}", 
                      request.getProductId(), request.getBidAmount(), request.getConfirmPurchase());
             
             Optional<User> userOpt = userService.findByUsername(currentUser.getUsername());
@@ -198,17 +198,17 @@ public class CheckoutController {
             
             if (transaction != null) {
                 // Compra realizada com sucesso
-                log.info("Purchase successful, redirecting to success page: transactionId={}", transaction.getId());
+                log.info("Compra bem-sucedida, redirecionando para página de sucesso: idTransacao={}", transaction.getId());
                 return "redirect:/checkout/sucesso/" + transaction.getId();
             } else {
                 // Foi um lance (retorna null)
-                log.info("Bid successful, redirecting to product page");
+                log.info("Lance bem-sucedido, redirecionando para página do produto");
                 redirectAttributes.addFlashAttribute("success", "Lance registrado com sucesso!");
                 return "redirect:/item/" + request.getProductId() + "?success=bid";
             }
             
         } catch (Exception e) {
-            log.error("Error confirming purchase: ", e);
+            log.error("Erro ao confirmar compra: ", e);
             redirectAttributes.addFlashAttribute("error", "Erro ao processar: " + e.getMessage());
             
             // Redirect back to appropriate page based on purchase type
@@ -304,7 +304,7 @@ public class CheckoutController {
             @AuthenticationPrincipal UserDetails currentUser,
             Model model) {
         
-        log.info("Accessing bid page: productId={}, bidAmount={}, user={}", 
+        log.info("Acessando página de lance: produtoId={}, valorLance={}, usuario={}", 
                  productId, bidAmount, currentUser.getUsername());
         
         // Redireciona para o endpoint padrão

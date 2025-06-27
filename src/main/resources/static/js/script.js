@@ -233,13 +233,13 @@ function updateAllCountdowns() {
         try {
             const dateStr = element.getAttribute('data-end-date');
             if (!dateStr) {
-                console.error('Missing data-end-date attribute on countdown element');
+                console.error('Atributo data-end-date ausente no elemento de contagem regressiva');
                 return;
             }
 
             const endDate = new Date(dateStr);
             if (isNaN(endDate)) {
-                console.error('Invalid date format in data-end-date:', dateStr);
+                console.error('Formato de data inválido em data-end-date:', dateStr);
                 return;
             }
             
@@ -263,22 +263,22 @@ function updateAllCountdowns() {
             
             element.textContent = displayText;
         } catch (e) {
-            console.error('Error updating countdown:', e);
+            console.error('Erro ao atualizar contagem regressiva:', e);
         }
     });
 }
 
 /**
- * Show validation error for form inputs
+ * Exibe erro de validação para campos de formulário
  */
 function showValidationError(inputElement, message) {
-    // Clear any existing error
+    // Remove qualquer erro existente
     clearValidationError(inputElement);
     
-    // Add is-invalid class to the input
+    // Adiciona classe is-invalid ao campo de entrada
     inputElement.classList.add('is-invalid');
     
-    // Create and append error message
+    // Cria e adiciona mensagem de erro
     const errorDiv = document.createElement('div');
     errorDiv.className = 'invalid-feedback';
     errorDiv.textContent = message;
@@ -286,7 +286,7 @@ function showValidationError(inputElement, message) {
 }
 
 /**
- * Clear validation error for form inputs
+ * Remove erro de validação dos campos de formulário
  */
 function clearValidationError(inputElement) {
     inputElement.classList.remove('is-invalid');
@@ -297,7 +297,7 @@ function clearValidationError(inputElement) {
 }
 
 /**
- * Live preview update
+ * Atualização em tempo real da visualização
  */
 // Função de preview simplificada - apenas para compatibilidade
 function updatePreview() {
@@ -375,7 +375,7 @@ function handleWindowResize() {
 
 // Função para otimizar performance em mobile
 function optimizeMobilePerformance() {
-    // Lazy loading para imagens se disponível
+    // Carregamento tardio para imagens se disponível
     if ('IntersectionObserver' in window) {
         const images = document.querySelectorAll('img[data-src]');
         const imageObserver = new IntersectionObserver((entries) => {

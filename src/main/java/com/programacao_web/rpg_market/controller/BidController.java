@@ -46,7 +46,7 @@ public class BidController {
         
         try {
             log.info("=== PREPARANDO MODAL DE LANCE ===");
-            log.info("ProductId: {}, Amount: {}, User: {}", productId, amount, currentUser.getUsername());
+            log.info("ProdutoId: {}, Valor: {}, Usuario: {}", productId, amount, currentUser.getUsername());
             
             // Buscar usuário
             Optional<User> userOpt = userService.findByUsername(currentUser.getUsername());
@@ -123,7 +123,7 @@ public class BidController {
         
         try {
             log.info("=== CONFIRMANDO LANCE ===");
-            log.info("ProductId: {}, Amount: {}, User: {}", productId, amount, currentUser.getUsername());
+            log.info("ProdutoId: {}, Valor: {}, Usuario: {}", productId, amount, currentUser.getUsername());
             
             // Buscar usuário
             Optional<User> userOpt = userService.findByUsername(currentUser.getUsername());

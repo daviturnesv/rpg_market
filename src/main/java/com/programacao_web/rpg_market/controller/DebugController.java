@@ -47,7 +47,7 @@ public class DebugController {
         try {
             Optional<Product> productOpt = productService.findById(productId);
             if (productOpt.isEmpty()) {
-                debug.put("error", "Product not found");
+                debug.put("error", "Produto não encontrado");
                 debug.put("timestamp", java.time.LocalDateTime.now());
                 return debug;
             }
@@ -98,7 +98,7 @@ public class DebugController {
             debug.put("timestamp", java.time.LocalDateTime.now());
             
         } catch (Exception e) {
-            log.error("Debug error: ", e);
+            log.error("Erro no debug: ", e);
             debug.put("error", e.getMessage());
             debug.put("exception", e.getClass().getSimpleName());
             debug.put("timestamp", java.time.LocalDateTime.now());

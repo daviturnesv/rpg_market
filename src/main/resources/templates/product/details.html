@@ -143,7 +143,7 @@
         <!-- Notification container -->
         <div id="bidNotifications" class="bid-notification"></div>
         
-        <!-- Loading overlay -->
+        <!-- Sobreposição de carregamento -->
         <div id="loadingOverlay" class="loading-overlay">
             <div class="loading-spinner">
                 <i class="fas fa-spinner fa-spin"></i>
@@ -640,7 +640,7 @@
                         }
                     })
                     .catch(error => {
-                        console.log('Error refreshing bid info:', error);
+                        console.log('Erro ao atualizar informações dos lances:', error);
                     });                }
             });
         </script>        <!-- Script unificado para controle do sistema de lances -->
@@ -657,7 +657,7 @@
                     const bidAmountInput = document.getElementById('bidAmount');
                     
                     if (!bidForm || !bidAmountInput) {
-                        console.log('Não é uma página de leilão, pulando inicialização dos lances');
+                        console.log('Não é uma página de leilão, saltando inicialização dos lances');
                         return;
                     }
                     

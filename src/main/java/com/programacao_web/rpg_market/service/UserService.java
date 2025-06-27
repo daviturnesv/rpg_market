@@ -35,7 +35,7 @@ public class UserService {
     @Transactional
     public User registerUser(User user) {
         if (userRepository.existsByUsername(user.getUsername())) {
-            throw new RuntimeException("Username já existe!");
+            throw new RuntimeException("Nome de usuário já existe!");
         }
         
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -64,11 +64,11 @@ public class UserService {
         int newExp = currentExp + exp;
         user.setExperience(newExp);
         
-        // Level up mechanism - every 100 XP is a level
+        // Mecanismo de subida de nível - a cada 100 XP é um nível
         int newLevel = (newExp / 100) + 1;
         if (newLevel > user.getLevel()) {
             user.setLevel(newLevel);
-            // Award gold for leveling up - 100 gold per level
+            // Concede ouro por subir de nível - 100 de ouro por nível
             BigDecimal goldBonus = new BigDecimal(100);
             user.setGoldCoins(user.getGoldCoins().add(goldBonus));
         }

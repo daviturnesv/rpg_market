@@ -252,7 +252,7 @@ async function updateChartsData() {
         
         const response = await fetch('/mestre/api/dados-graficos');
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`Erro HTTP! status: ${response.status}`);
         }
         
         const data = await response.json();

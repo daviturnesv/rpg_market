@@ -249,7 +249,7 @@
                 const successDiv = document.getElementById('cepSuccess');
                 const errorText = document.getElementById('cepErrorText');
                 
-                // Format CEP input
+                // Formatar entrada de CEP
                 cepInput.addEventListener('input', function(e) {
                     let value = e.target.value.replace(/\D/g, '');
                     if (value.length > 8) value = value.slice(0, 8);
@@ -259,7 +259,7 @@
                     e.target.value = value;
                 });
 
-                // Search CEP on button click
+                // Buscar CEP ao clicar no botão
                 btnSearchCep.addEventListener('click', function() {
                     const cep = cepInput.value.replace(/\D/g, '');
                     if (cep.length === 8) {
@@ -269,7 +269,7 @@
                     }
                 });
 
-                // Search CEP on Enter key
+                // Buscar CEP ao pressionar Enter
                 cepInput.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
@@ -296,7 +296,7 @@
                 function searchCep(cep) {
                     clearMessages();
                     
-                    // Show loading state
+                    // Mostra estado de carregamento
                     searchIcon.className = 'fas fa-spinner fa-spin';
                     btnSearchCep.disabled = true;
 
@@ -306,7 +306,7 @@
                             if (data.erro) {
                                 showError('CEP não encontrado. Verifique se o CEP está correto.');
                             } else {
-                                // Fill form fields
+                                // Preencher campos do formulário
                                 document.getElementById('street').value = data.logradouro || '';
                                 document.getElementById('district').value = data.bairro || '';
                                 document.getElementById('city').value = data.localidade || '';
@@ -314,11 +314,11 @@
                                 
                                 showSuccess();
                                 
-                                // Try to get coordinates using geocoding
+                                // Tentar obter coordenadas usando geocodificação
                                 const address = `${data.logradouro}, ${data.bairro}, ${data.localidade}, ${data.uf}, Brasil`;
                                 getCoordinatesFromAddress(address);
                                 
-                                // Focus on number field
+                                // Focar no campo de número
                                 setTimeout(() => {
                                     document.getElementById('number').focus();
                                 }, 100);
@@ -335,7 +335,7 @@
                 }
 
                 function getCoordinatesFromAddress(address) {
-                    // Using OpenStreetMap Nominatim API as a free alternative
+                    // Usando a API Nominatim do OpenStreetMap como alternativa gratuita
                     const encodedAddress = encodeURIComponent(address);
                     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`;
                     
@@ -346,15 +346,15 @@
                                 const result = data[0];
                                 document.querySelector('input[name="latitude"]').value = result.lat;
                                 document.querySelector('input[name="longitude"]').value = result.lon;
-                                console.log('Coordinates found:', result.lat, result.lon);
+                                console.log('Coordenadas encontradas:', result.lat, result.lon);
                             }
                         })
                         .catch(error => {
-                            console.log('Coordinates not found, but address filled successfully');
+                            console.log('Coordenadas não encontradas, mas endereço preenchido com sucesso');
                         });
                 }
 
-                // Form validation
+                // Validação do formulário
                 const form = document.getElementById('addressForm');
                 form.addEventListener('submit', function(e) {
                     const requiredFields = form.querySelectorAll('[required]');
