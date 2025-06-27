@@ -45,6 +45,8 @@ sudo systemctl start mongod
 ```
 
 ### **2. Configure o Banco de Dados**
+
+#### **Desenvolvimento Local**
 Edite `src/main/resources/application.properties`:
 ```properties
 # MongoDB Local
@@ -234,6 +236,52 @@ O sistema é inicializado automaticamente com:
 - 🎯 **Sistema de Reputação** - Avaliações e reviews
 - 📱 **API REST Completa** - Integração mobile
 - 🌍 **Internacionalização** - Múltiplos idiomas
+
+## 🚀 **Deploy no Render.com (GRATUITO)**
+
+Este projeto está totalmente configurado para deploy automático no Render.com (plano gratuito).
+
+### **1. Preparação**
+```bash
+# Clone o repositório
+git clone <url-do-seu-repositorio>
+cd rpg_market
+
+# Certifique-se que os arquivos estão presentes:
+# ✅ Dockerfile
+# ✅ render.yaml  
+# ✅ application-prod.properties
+```
+
+### **2. Deploy no Render**
+1. 🌐 Acesse [render.com](https://render.com) e faça login/cadastro
+2. 🔗 Conecte seu repositório GitHub
+3. 📦 Crie um **Web Service** e selecione seu repositório
+4. ⚙️ O Render detectará automaticamente o `render.yaml` e configurará tudo
+5. 🔐 **IMPORTANTE**: Configure a variável `MONGODB_URI` no dashboard:
+   - Vá em **Environment Variables**
+   - Adicione: `MONGODB_URI` = `sua-connection-string-mongodb`
+   - Exemplo: `mongodb+srv://user:password@cluster.mongodb.net/`
+
+### **3. Configuração do MongoDB**
+- 📊 Use **MongoDB Atlas** (gratuito): [cloud.mongodb.com](https://cloud.mongodb.com)
+- 🔑 Crie um cluster gratuito e obtenha a connection string
+- 🌐 Configure o IP `0.0.0.0/0` para acesso do Render
+
+### **4. Variáveis Já Configuradas**
+O `render.yaml` já inclui:
+- ✅ `SPRING_PROFILES_ACTIVE=prod`
+- ✅ `SERVER_PORT=8080`
+- ✅ `APP_UPLOAD_DIR=/tmp/uploads`
+- ✅ `MONGODB_DATABASE=Cluster0`
+- ⚠️ `MONGODB_URI` (configure manualmente por segurança)
+
+### **5. Primeiro Deploy**
+- ⏱️ **Tempo**: ~5-10 minutos
+- 🔄 **Auto-deploy**: Pushes na branch principal
+- 📱 **URL**: `https://seu-app.onrender.com`
+
+---
 
 ## 🤝 **Contribuição**
 

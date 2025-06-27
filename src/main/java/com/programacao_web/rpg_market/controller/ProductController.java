@@ -310,7 +310,7 @@ public class ProductController {    private static final Logger log = LoggerFact
      */
     @PostMapping("/{id}/excluir")
     public String deleteProduct(@PathVariable String id, 
-                              @AuthenticationPrincipal UserDetails currentUser,  // Mudado de User para UserDetails
+                              @AuthenticationPrincipal UserDetails currentUser,
                               RedirectAttributes redirectAttributes) {
         try {
             // Primeiro, obtenha o usuário atual do UserService usando o nome de usuário do UserDetails

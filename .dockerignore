@@ -1,0 +1,19 @@
+# Docker ignore file para otimizar build
+target/
+!target/rpg_market-*.jar
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+*.log
+.env
+.env.*
+node_modules/
+npm-debug.log*
+.mvn/wrapper/maven-wrapper.jar
+azure.yaml
+infra/
+compile.log
+rpgmarket_db.mv.db
+rpgmarket_db.trace.db

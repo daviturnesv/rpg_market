@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: rpg-market
+metadata:
+  template: rpg-market@0.0.1-beta
+services:
+  rpg-market:
+    project: .
+    language: java
+    host: appservice
+hooks:
+  preprovision:
+    shell: pwsh
+    run: |
+      echo "=== Pre-provision hook ==="
+      echo "Building the application..."
+      ./mvnw clean package -DskipTests
+      echo "Build completed successfully"
+  postprovision:
+    shell: pwsh
+    run: |
+      echo "=== Post-provision hook ==="
+      echo "Infrastructure provisioned successfully"

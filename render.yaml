@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: rpg-market
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: MONGODB_DATABASE
+        value: Cluster0
+      - key: MONGODB_URI
+        sync: false  # Será configurado manualmente no dashboard
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: SERVER_PORT
+        value: 8080
+      - key: APP_UPLOAD_DIR
+        value: /tmp/uploads
+      - key: LOGGING_LEVEL_ROOT
+        value: INFO
