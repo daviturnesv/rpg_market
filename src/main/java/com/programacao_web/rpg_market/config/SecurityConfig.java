@@ -25,6 +25,7 @@ public class SecurityConfig {
             .authenticationProvider(authenticationProvider())            .authorizeHttpRequests(auth -> auth                // Páginas públicas
                 .requestMatchers("/", "/mercado/**", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 .requestMatchers("/error/**").permitAll()
+                .requestMatchers("/health").permitAll() // Health check endpoint
                 .requestMatchers("/login", "/authenticate").permitAll() // Explicitly permit login page and processing (GET and POST)                .requestMatchers("/debug/**").permitAll() // Debug endpoints
                 .requestMatchers("/item/{id}").permitAll() // Visualização de itens é pública
                 .requestMatchers("/aventureiro/registrar").permitAll()

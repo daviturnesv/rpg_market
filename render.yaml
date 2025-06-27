@@ -11,9 +11,11 @@ services:
         sync: false  # Será configurado manualmente no dashboard
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-      - key: SERVER_PORT
-        value: 8080
       - key: APP_UPLOAD_DIR
         value: /tmp/uploads
       - key: LOGGING_LEVEL_ROOT
-        value: INFO
+        value: WARN
+      - key: JAVA_OPTS
+        value: "-Xmx512m -Xms256m -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=200"
+    healthCheckPath: /
+    numInstances: 1
