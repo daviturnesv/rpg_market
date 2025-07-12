@@ -87,8 +87,9 @@ public class DataInitializer {
                 System.out.println("❌ Erro: Admin não encontrado no banco!");
             }
             
-            if (productRepository.count() == 0) {
-                System.out.println("Criando produtos iniciais...");
+            // Criar produtos de demonstração se houver menos de 5 produtos
+            if (productCount < 5) {
+                System.out.println("Criando produtos de demonstração (existentes: " + productCount + ")...");
                 User admin = userRepository.findByUsername("admin").orElse(null);
 
                 if (admin != null) {
@@ -199,7 +200,7 @@ public class DataInitializer {
                     System.out.println("❌ Admin não encontrado para criar produtos!");
                 }
             } else {
-                 System.out.println("Produtos já existem, pulando criação de dados de exemplo.");
+                 System.out.println("Produtos suficientes já existem ("+productCount+"), pulando criação de dados de exemplo.");
             }
             
             System.out.println("=== Inicialização concluída ===");

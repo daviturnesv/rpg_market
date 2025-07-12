@@ -2,6 +2,8 @@ package com.programacao_web.rpg_market.controller;
 
 import com.programacao_web.rpg_market.model.*;
 import com.programacao_web.rpg_market.repository.BidRepository;
+import com.programacao_web.rpg_market.repository.UserRepository;
+import com.programacao_web.rpg_market.repository.ProductRepository;
 import com.programacao_web.rpg_market.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,7 +25,9 @@ import java.util.Optional;
 @RequestMapping("/debug")
 public class DebugController {
 
-    private static final Logger log = LoggerFactory.getLogger(DebugController.class);    @Autowired
+    private static final Logger log = LoggerFactory.getLogger(DebugController.class);
+
+    @Autowired
     private ProductService productService;
     
     @Autowired
@@ -33,10 +37,103 @@ public class DebugController {
     private BidRepository bidRepository;
     
     @Autowired
-    private com.programacao_web.rpg_market.repository.ProductRepository productRepository;
+    private UserRepository userRepository;
+    
+    @Autowired
+    private ProductRepository productRepository;
 
     @Autowired
     private org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping requestMappingHandlerMapping;
+
+    @GetMapping("/verificar-dados-demo")
+    @ResponseBody
+    public Map<String, Object> verificarDadosDemo() {
+        Map<String, Object> resultado = new HashMap<>();
+        
+        try {
+            log.info("=== Verificando dados de demonstração ===");
+            
+            // Contar usuários e produtos
+            List<User> usuarios = userRepository.findAll();
+            List<Product> produtos = productRepository.findAll();
+            
+            resultado.put("total_usuarios", usuarios.size());
+            resultado.put("total_produtos", produtos.size());
+            
+            // Verificar usuários padrão
+            Map<String, Object> usuariosPadrao = new HashMap<>();
+            boolean adminExiste = usuarios.stream().anyMatch(u -> "admin".equals(u.getUsername()));
+            boolean testUserExiste = usuarios.stream().anyMatch(u -> "testuser".equals(u.getUsername()));
+            
+            usuariosPadrao.put("admin_existe", adminExiste);
+            usuariosPadrao.put("testuser_existe", testUserExiste);
+            resultado.put("usuarios_padrao", usuariosPadrao);
+            
+            // Verificar produtos específicos de demonstração
+            String[] produtosEsperados = {
+                "Espada Longa de Aço Valiriano",
+                "Arco Élfico de Galhos de Lunária", 
+                "Poção de Cura Maior",
+                "Mochila de Couro de Ogro Encantada",
+                "Amuleto da Proteção Menor"
+            };
+            
+            Map<String, Boolean> produtosPadrao = new HashMap<>();
+            for (String nome : produtosEsperados) {
+                boolean existe = produtos.stream().anyMatch(p -> nome.equals(p.getName()));
+                produtosPadrao.put(nome, existe);
+            }
+            resultado.put("produtos_padrao_esperados", produtosPadrao);
+            
+            // Listar todos os produtos atuais
+            List<Map<String, Object>> produtosAtuais = produtos.stream()
+                .map(p -> {
+                    Map<String, Object> prod = new HashMap<>();
+                    prod.put("id", p.getId());
+                    prod.put("name", p.getName());
+                    prod.put("price", p.getPrice());
+                    prod.put("type", p.getType());
+                    prod.put("category", p.getCategory());
+                    prod.put("rarity", p.getRarity());
+                    prod.put("status", p.getStatus());
+                    prod.put("seller", p.getSeller().getUsername());
+                    return prod;
+                })
+                .toList();
+            resultado.put("produtos_atuais", produtosAtuais);
+            
+            // Verificar integridade dos dados
+            int produtosPadraoEncontrados = (int) produtosPadrao.values().stream()
+                .mapToInt(b -> b ? 1 : 0)
+                .sum();
+            
+            resultado.put("produtos_padrao_encontrados", produtosPadraoEncontrados);
+            resultado.put("produtos_padrao_completos", produtosPadraoEncontrados == 5);
+            
+            // Status geral
+            boolean dadosCompletos = adminExiste && testUserExiste && produtosPadraoEncontrados == 5;
+            resultado.put("dados_demonstracao_completos", dadosCompletos);
+            
+            if (!dadosCompletos) {
+                StringBuilder recomendacao = new StringBuilder("RECOMENDAÇÕES: ");
+                if (!adminExiste) recomendacao.append("Criar usuário admin. ");
+                if (!testUserExiste) recomendacao.append("Criar usuário testuser. ");
+                if (produtosPadraoEncontrados < 5) {
+                    recomendacao.append("Criar ").append(5 - produtosPadraoEncontrados)
+                        .append(" produtos de demonstração em falta. ");
+                }
+                resultado.put("recomendacao", recomendacao.toString());
+            }
+            
+            log.info("Verificação concluída - Dados completos: {}", dadosCompletos);
+            
+        } catch (Exception e) {
+            log.error("Erro ao verificar dados de demonstração", e);
+            resultado.put("erro", "Erro interno: " + e.getMessage());
+        }
+        
+        return resultado;
+    }
 
     @GetMapping("/product/{productId}")
     @ResponseBody
@@ -107,9 +204,6 @@ public class DebugController {
         return debug;
     }
 
-    /**
-     * Debug endpoint para verificar mapeamentos de endpoints
-     */
     @GetMapping("/mappings")
     @ResponseBody
     public Map<String, Object> debugMappings() {
@@ -131,78 +225,6 @@ public class DebugController {
         } catch (Exception e) {
             debug.put("error", e.getMessage());
             debug.put("timestamp", java.time.LocalDateTime.now());
-        }
-        
-        return debug;
-    }    @GetMapping("/images")
-    @ResponseBody
-    public Map<String, Object> debugProductImages() {
-        Map<String, Object> debug = new HashMap<>();
-          try {
-            List<Product> allProducts = productRepository.findAll();
-            
-            debug.put("totalProducts", allProducts.size());
-            debug.put("products", allProducts.stream().map(product -> {
-                Map<String, Object> productInfo = new HashMap<>();
-                productInfo.put("id", product.getId());
-                productInfo.put("name", product.getName());
-                productInfo.put("imageUrl", product.getImageUrl());
-                productInfo.put("status", product.getStatus());
-                productInfo.put("createdAt", product.getCreatedAt());
-                return productInfo;
-            }).toList());
-            
-            debug.put("status", "success");
-            
-        } catch (Exception e) {
-            debug.put("status", "error");
-            debug.put("message", e.getMessage());
-            log.error("Erro ao debugar imagens dos produtos", e);
-        }
-        
-        return debug;
-    }    @Autowired
-    private com.programacao_web.rpg_market.repository.UserRepository userRepository;
-
-    @GetMapping("/users")
-    @ResponseBody
-    public Map<String, Object> debugUsers() {
-        Map<String, Object> debug = new HashMap<>();
-        
-        try {
-            List<User> allUsers = userRepository.findAll();
-            
-            debug.put("totalUsers", allUsers.size());
-            debug.put("users", allUsers.stream().map(user -> {
-                Map<String, Object> userInfo = new HashMap<>();
-                userInfo.put("id", user.getId());
-                userInfo.put("username", user.getUsername());
-                userInfo.put("email", user.getEmail());
-                userInfo.put("role", user.getRole());
-                userInfo.put("characterClass", user.getCharacterClass());
-                userInfo.put("level", user.getLevel());
-                userInfo.put("goldCoins", user.getGoldCoins());
-                userInfo.put("passwordHash", user.getPassword() != null ? 
-                    user.getPassword().substring(0, Math.min(10, user.getPassword().length())) + "..." : null);
-                return userInfo;
-            }).toList());
-            
-            // Verificar especificamente o usuário admin
-            Optional<User> adminUser = userService.findByUsername("admin");
-            if (adminUser.isPresent()) {
-                debug.put("adminExists", true);
-                debug.put("adminRole", adminUser.get().getRole());
-                debug.put("adminPasswordHash", adminUser.get().getPassword().substring(0, Math.min(10, adminUser.get().getPassword().length())) + "...");
-            } else {
-                debug.put("adminExists", false);
-            }
-            
-            debug.put("status", "success");
-            
-        } catch (Exception e) {
-            debug.put("status", "error");
-            debug.put("message", e.getMessage());
-            log.error("Erro ao debugar usuários", e);
         }
         
         return debug;

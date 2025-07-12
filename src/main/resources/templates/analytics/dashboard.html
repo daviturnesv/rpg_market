@@ -26,6 +26,9 @@
                     <a th:href="@{/mestre/relatorio-atividades}" class="nav-btn">
                         <i class="fas fa-chart-line me-2"></i>Atividades
                     </a>
+                    <a th:href="@{/mestre/gestao-anuncios}" class="nav-btn">
+                        <i class="fas fa-cogs me-2"></i>Gestão de Anúncios
+                    </a>
                 </div>
             </div>
 
@@ -39,15 +42,15 @@
                     <label>Período de análise:</label>
                     <div class="btn-group" role="group">
                         <a th:href="@{/mestre/dashboard(periodo=7)}" 
-                           th:class="${periodoSelecionado == 7 ? 'btn btn-primary' : 'btn btn-outline-primary'}">
+                           th:class="${periodoSelecionado == 7 ? 'btn btn-gold' : 'btn btn-outline-light'}">
                             7 dias
                         </a>
                         <a th:href="@{/mestre/dashboard(periodo=14)}" 
-                           th:class="${periodoSelecionado == 14 ? 'btn btn-primary' : 'btn btn-outline-primary'}">
+                           th:class="${periodoSelecionado == 14 ? 'btn btn-gold' : 'btn btn-outline-light'}">
                             14 dias
                         </a>
                         <a th:href="@{/mestre/dashboard(periodo=30)}" 
-                           th:class="${periodoSelecionado == 30 ? 'btn btn-primary' : 'btn btn-outline-primary'}">
+                           th:class="${periodoSelecionado == 30 ? 'btn btn-gold' : 'btn btn-outline-light'}">
                             30 dias
                         </a>
                     </div>
@@ -129,8 +132,8 @@
                 <div class="col-lg-6 mb-4">
                     <div class="content-card">
                         <div class="card-header">
-                            <h5><i class="fas fa-trophy me-2"></i>Top 5 Vendedores</h5>
-                            <a th:href="@{/mestre/ranking-nobres}" class="btn btn-sm btn-outline-primary">Ver Todos</a>
+                            <h5><i class="fas fa-store me-2"></i>Top 5 Vendedores</h5>
+                            <a th:href="@{/mestre/ranking-nobres}" class="btn btn-sm btn-outline-light">Ver Todos</a>
                         </div>
                         <div class="card-body">
                             <div th:if="${topVendedores != null and !topVendedores.isEmpty()}">
@@ -141,8 +144,8 @@
                                         <div class="rank-details" th:text="${seller.characterClass + ' - Nível ' + seller.level}">Classe - Nível</div>
                                     </div>
                                     <div class="rank-value">
-                                        <span class="gold-text" th:text="${#numbers.formatDecimal(seller.goldCoins, 0, 0)}">0</span>
-                                        <small>moedas</small>
+                                        <span class="level-text">Vendedor Ativo</span>
+                                        <small>comerciante</small>
                                     </div>
                                 </div>
                             </div>
@@ -159,7 +162,7 @@
                     <div class="content-card">
                         <div class="card-header">
                             <h5><i class="fas fa-gem me-2"></i>Produtos Mais Caros</h5>
-                            <a th:href="@{/mercado}" class="btn btn-sm btn-outline-primary">Ver Mercado</a>
+                            <a th:href="@{/mercado}" class="btn btn-sm btn-outline-light">Ver Mercado</a>
                         </div>
                         <div class="card-body">
                             <div th:if="${produtosMaisCaros != null and !produtosMaisCaros.isEmpty()}">

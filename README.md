@@ -248,6 +248,7 @@ git clone <url-do-seu-repositorio>
 cd rpg_market
 
 # Certifique-se que os arquivos estão presentes:
+
 # ✅ Dockerfile
 # ✅ render.yaml  
 # ✅ application-prod.properties

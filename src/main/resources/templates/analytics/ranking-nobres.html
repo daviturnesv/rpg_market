@@ -27,6 +27,9 @@
                     <a th:href="@{/mestre/relatorio-atividades}" class="nav-btn">
                         <i class="fas fa-chart-line me-2"></i>Atividades
                     </a>
+                    <a th:href="@{/mestre/gestao-anuncios}" class="nav-btn">
+                        <i class="fas fa-cogs me-2"></i>Gestão de Anúncios
+                    </a>
                 </div>
             </div>
 
@@ -86,97 +89,105 @@
                 </h5>
                 <div class="text-center">
                     <button type="button" class="filter-btn active" id="btn-vendedores" onclick="showRanking('vendedores')">
-                        <i class="fas fa-coins me-2"></i>Top Vendedores
+                        <i class="fas fa-store me-2"></i>Top Vendedores
+                        <small class="d-block">por vendas realizadas</small>
                     </button>
                     <button type="button" class="filter-btn" id="btn-compradores" onclick="showRanking('compradores')">
                         <i class="fas fa-shopping-cart me-2"></i>Top Compradores
+                        <small class="d-block">por compras realizadas</small>
                     </button>
                     <button type="button" class="filter-btn" id="btn-ricos" onclick="showRanking('ricos')">
                         <i class="fas fa-gem me-2"></i>Mais Ricos
+                        <small class="d-block">por moedas de ouro</small>
                     </button>
                 </div>
             </div>
 
             <!-- Rankings -->
             <div class="row">
-                <!-- Ranking de Vendedores -->
-                <div class="col-12" id="ranking-vendedores">
-                    <div class="content-card">
-                        <div class="card-header">
-                            <h5><i class="fas fa-trophy me-2"></i>Top Vendedores por Ouro</h5>
-                        </div>
-                        <div class="card-body">
-                            <div th:if="${topVendedores != null and !topVendedores.isEmpty()}">
-                                <div th:each="user, stat : ${topVendedores}" class="ranking-item">
-                                    <div class="rank-position" th:text="${stat.index + 1}">1</div>
-                                    <div class="rank-info">
-                                        <div class="rank-name" th:text="${user.username}">Nome do Usuário</div>
-                                        <div class="rank-details" th:text="${user.characterClass + ' - Nível ' + user.level}">Classe - Nível</div>
+                <div class="col-12">
+                    <div class="ranking-container">
+                        <!-- Ranking de Vendedores -->
+                        <div id="ranking-vendedores" class="ranking-section d-none">
+                            <div class="content-card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-store me-2"></i>Top Vendedores por Quantidade de Vendas</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div th:if="${topVendedores != null and !topVendedores.isEmpty()}">
+                                        <div th:each="user, stat : ${topVendedores}" class="ranking-item">
+                                            <div class="rank-position" th:text="${stat.index + 1}">1</div>
+                                            <div class="rank-info">
+                                                <div class="rank-name" th:text="${user.username}">Nome do Usuário</div>
+                                                <div class="rank-details" th:text="${user.characterClass + ' - Nível ' + user.level}">Classe - Nível</div>
+                                            </div>
+                                            <div class="rank-value">
+                                                <span class="gold-text" th:text="${vendasPorUsuario?.get(user) ?: 0}">0</span>
+                                                <small>vendas realizadas</small>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="rank-value">
-                                        <span class="gold-text" th:text="${#numbers.formatDecimal(user.goldCoins, 0, 0)}">0</span>
-                                        <small>moedas</small>
+                                    <div th:if="${topVendedores == null or topVendedores.isEmpty()}" class="empty-state">
+                                        <i class="fas fa-store fa-3x mb-3"></i>
+                                        <p>Nenhum vendedor encontrado</p>
                                     </div>
                                 </div>
                             </div>
-                            <div th:if="${topVendedores == null or topVendedores.isEmpty()}" class="empty-state">
-                                <i class="fas fa-store fa-3x mb-3"></i>
-                                <p>Nenhum vendedor encontrado</p>
-                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Ranking de Compradores -->
-                <div class="col-12" id="ranking-compradores" style="display: none;">
-                    <div class="content-card">
-                        <div class="card-header">
-                            <h5><i class="fas fa-shopping-cart me-2"></i>Top Compradores por Nível</h5>
-                        </div>
-                        <div class="card-body">
-                            <div th:if="${topCompradores != null and !topCompradores.isEmpty()}">
-                                <div th:each="user, stat : ${topCompradores}" class="ranking-item">
-                                    <div class="rank-position" th:text="${stat.index + 1}">1</div>
-                                    <div class="rank-info">
-                                        <div class="rank-name" th:text="${user.username}">Nome do Usuário</div>
-                                        <div class="rank-details" th:text="${user.characterClass}">Classe</div>
+                        <!-- Ranking de Compradores -->
+                        <div id="ranking-compradores" class="ranking-section d-none">
+                            <div class="content-card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-shopping-cart me-2"></i>Top Compradores por Quantidade de Compras</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div th:if="${topCompradores != null and !topCompradores.isEmpty()}">
+                                        <div th:each="user, stat : ${topCompradores}" class="ranking-item">
+                                            <div class="rank-position" th:text="${stat.index + 1}">1</div>
+                                            <div class="rank-info">
+                                                <div class="rank-name" th:text="${user.username}">Nome do Usuário</div>
+                                                <div class="rank-details" th:text="${user.characterClass + ' - Nível ' + user.level}">Classe - Nível</div>
+                                            </div>
+                                            <div class="rank-value">
+                                                <span class="level-text" th:text="${comprasPorUsuario?.get(user) ?: 0}">0</span>
+                                                <small>compras realizadas</small>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="rank-value">
-                                        <span class="level-text" th:text="'Nível ' + ${user.level}">Nível 0</span>
+                                    <div th:if="${topCompradores == null or topCompradores.isEmpty()}" class="empty-state">
+                                        <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                                        <p>Nenhum comprador encontrado</p>
                                     </div>
                                 </div>
                             </div>
-                            <div th:if="${topCompradores == null or topCompradores.isEmpty()}" class="empty-state">
-                                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
-                                <p>Nenhum comprador encontrado</p>
-                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Ranking de Mais Ricos -->
-                <div class="col-12" id="ranking-ricos" style="display: none;">
-                    <div class="content-card">
-                        <div class="card-header">
-                            <h5><i class="fas fa-gem me-2"></i>Aventureiros Mais Ricos</h5>
-                        </div>
-                        <div class="card-body">
-                            <div th:if="${usuariosMaisRicos != null and !usuariosMaisRicos.isEmpty()}">
-                                <div th:each="user, stat : ${usuariosMaisRicos}" class="ranking-item">
-                                    <div class="rank-position" th:text="${stat.index + 1}">1</div>
-                                    <div class="rank-info">
-                                        <div class="rank-name" th:text="${user.username}">Nome do Usuário</div>
-                                        <div class="rank-details" th:text="${user.characterClass + ' - Nível ' + user.level}">Classe - Nível</div>
+                        <!-- Ranking de Mais Ricos -->
+                        <div id="ranking-ricos" class="ranking-section d-none">
+                            <div class="content-card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-gem me-2"></i>Aventureiros Mais Ricos</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div th:if="${usuariosMaisRicos != null and !usuariosMaisRicos.isEmpty()}">
+                                        <div th:each="user, stat : ${usuariosMaisRicos}" class="ranking-item">
+                                            <div class="rank-position" th:text="${stat.index + 1}">1</div>
+                                            <div class="rank-info">
+                                                <div class="rank-name" th:text="${user.username}">Nome do Usuário</div>
+                                                <div class="rank-details" th:text="${user.characterClass + ' - Nível ' + user.level}">Classe - Nível</div>
+                                            </div>
+                                            <div class="rank-value">
+                                                <span class="gold-text" th:text="${#numbers.formatDecimal(user.goldCoins, 0, 0)}">0</span>
+                                                <small>moedas</small>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="rank-value">
-                                        <span class="gold-text" th:text="${#numbers.formatDecimal(user.goldCoins, 0, 0)}">0</span>
-                                        <small>moedas</small>
+                                    <div th:if="${usuariosMaisRicos == null or usuariosMaisRicos.isEmpty()}" class="empty-state">
+                                        <i class="fas fa-gem fa-3x mb-3"></i>
+                                        <p>Nenhum usuário rico encontrado</p>
                                     </div>
                                 </div>
-                            </div>
-                            <div th:if="${usuariosMaisRicos == null or usuariosMaisRicos.isEmpty()}" class="empty-state">
-                                <i class="fas fa-gem fa-3x mb-3"></i>
-                                <p>Nenhum usuário rico encontrado</p>
                             </div>
                         </div>
                     </div>
@@ -188,9 +199,13 @@
         <script>
             function showRanking(tipo) {
                 // Esconder todos os rankings
-                document.getElementById('ranking-vendedores').style.display = 'none';
-                document.getElementById('ranking-compradores').style.display = 'none';
-                document.getElementById('ranking-ricos').style.display = 'none';
+                const rankings = ['ranking-vendedores', 'ranking-compradores', 'ranking-ricos'];
+                rankings.forEach(ranking => {
+                    const element = document.getElementById(ranking);
+                    if (element) {
+                        element.classList.add('d-none');
+                    }
+                });
                 
                 // Remover classe ativa de todos os botões
                 document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -198,21 +213,43 @@
                 });
                 
                 // Mostrar ranking selecionado e ativar botão
-                if (tipo === 'vendedores') {
-                    document.getElementById('ranking-vendedores').style.display = 'block';
-                    document.getElementById('btn-vendedores').classList.add('active');
-                } else if (tipo === 'compradores') {
-                    document.getElementById('ranking-compradores').style.display = 'block';
-                    document.getElementById('btn-compradores').classList.add('active');
-                } else if (tipo === 'ricos') {
-                    document.getElementById('ranking-ricos').style.display = 'block';
-                    document.getElementById('btn-ricos').classList.add('active');
+                const targetRanking = document.getElementById('ranking-' + tipo);
+                const targetButton = document.getElementById('btn-' + tipo);
+                
+                if (targetRanking && targetButton) {
+                    // Remover classe d-none e mostrar o elemento
+                    targetRanking.classList.remove('d-none');
+                    targetButton.classList.add('active');
+                    
+                    // Adicionar animação de entrada
+                    targetRanking.classList.add('ranking-fade-in');
+                    
+                    // Remover classe de animação após completar
+                    setTimeout(() => {
+                        targetRanking.classList.remove('ranking-fade-in');
+                    }, 500);
                 }
+                
+                console.log('Ranking exibido:', tipo);
             }
             
             // Inicializar com o ranking de vendedores
             document.addEventListener('DOMContentLoaded', function() {
-                showRanking('vendedores');
+                // console.log('Página carregada, inicializando rankings...');
+                
+                // Esconder todos os rankings inicialmente
+                const rankings = ['ranking-vendedores', 'ranking-compradores', 'ranking-ricos'];
+                rankings.forEach(ranking => {
+                    const element = document.getElementById(ranking);
+                    if (element) {
+                        element.classList.add('d-none');
+                    }
+                });
+                
+                // Mostrar ranking inicial após um pequeno delay
+                setTimeout(() => {
+                    showRanking('vendedores');
+                }, 100);
             });
         </script>
     </div>

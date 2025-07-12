@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -19,6 +20,12 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
     
     // Busca transações por status
     List<Transaction> findByStatus(TransactionStatus status);
+    
+    // OTIMIZAÇÃO: Busca transações por período
+    List<Transaction> findByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime startDate);
+    
+    // OTIMIZAÇÃO: Contagem de transações por período
+    long countByCreatedAtAfter(LocalDateTime startDate);
     
     // Busca os top vendedores por número de vendas completadas
     @Aggregation(pipeline = {

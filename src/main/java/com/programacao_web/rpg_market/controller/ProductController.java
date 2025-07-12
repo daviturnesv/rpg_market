@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
+import java.util.EnumSet;
 
 @Controller
 @RequestMapping("/item")
@@ -39,19 +41,31 @@ public class ProductController {    private static final Logger log = LoggerFact
     public String showCreateProductForm(Model model, @AuthenticationPrincipal UserDetails currentUser) {
         try {
             model.addAttribute("product", new Product());
-            // Exibir apenas categorias permitidas para a classe do usuário logado
+            // Exibir categorias baseadas nas permissões do usuário
             String characterClass = null;
+            UserRole userRole = null;
             if (currentUser != null) {
                 Optional<User> userOpt = userService.findByUsername(currentUser.getUsername());
                 if (userOpt.isPresent()) {
                     characterClass = userOpt.get().getCharacterClass();
+                    userRole = userOpt.get().getRole();
                 }
             }
             if (characterClass != null) characterClass = capitalize(characterClass.trim());
-            model.addAttribute("categories", com.programacao_web.rpg_market.util.ClassCategoryPermission.getAllowedCategories(characterClass));
+            
+            // MESTREs podem criar anúncios de qualquer categoria
+            Set<ProductCategory> allowedCategories;
+            if (userRole == UserRole.ROLE_MESTRE || userRole == UserRole.ROLE_ADMIN) {
+                allowedCategories = EnumSet.allOf(ProductCategory.class);
+            } else {
+                allowedCategories = com.programacao_web.rpg_market.util.ClassCategoryPermission.getAllowedCategories(characterClass);
+            }
+            
+            model.addAttribute("categories", allowedCategories);
             model.addAttribute("rarities", ItemRarity.values());
             model.addAttribute("types", ProductType.values());
             model.addAttribute("magicProperties", MagicProperty.values());
+            model.addAttribute("isMaster", userRole == UserRole.ROLE_MESTRE || userRole == UserRole.ROLE_ADMIN);
             return "product/create";
         } catch (Exception e) {
             throw e;
@@ -73,8 +87,11 @@ public class ProductController {    private static final Logger log = LoggerFact
                 return "redirect:/item/novo";
             }
             User user = userOpt.get();
-            // Validação: só pode criar leilão de categoria permitida
-            if (product.getType() == ProductType.AUCTION && !ClassCategoryPermission.isCategoryAllowed(user.getCharacterClass(), product.getCategory())) {
+            
+            // Validação: MESTREs podem criar leilões de qualquer categoria, outros usuários têm restrições
+            boolean isMaster = user.getRole() == UserRole.ROLE_MESTRE || user.getRole() == UserRole.ROLE_ADMIN;
+            if (product.getType() == ProductType.AUCTION && !isMaster && 
+                !ClassCategoryPermission.isCategoryAllowed(user.getCharacterClass(), product.getCategory())) {
                 redirectAttributes.addFlashAttribute("error", "Sua classe não pode criar leilões dessa categoria.");
                 return "redirect:/item/novo";
             }
@@ -266,13 +283,21 @@ public class ProductController {    private static final Logger log = LoggerFact
             return "error/404";
         }
         
-        // Verifica se o produto pertence ao usuário
-        if (!productOpt.get().getSeller().getId().equals(userOpt.get().getId())) {
+        User user = userOpt.get();
+        Product product = productOpt.get();
+        
+        // MESTREs podem editar qualquer produto, outros usuários só os próprios
+        boolean isMaster = user.getRole() == UserRole.ROLE_MESTRE || user.getRole() == UserRole.ROLE_ADMIN;
+        boolean isOwner = product.getSeller().getId().equals(user.getId());
+        
+        if (!isMaster && !isOwner) {
             return "error/403"; // Acesso negado
         }
         
-        model.addAttribute("product", productOpt.get());
+        model.addAttribute("product", product);
         model.addAttribute("categories", ProductCategory.values());
+        model.addAttribute("isMaster", isMaster);
+        model.addAttribute("isOwner", isOwner);
         
         return "product/edit";
     }
@@ -289,14 +314,44 @@ public class ProductController {    private static final Logger log = LoggerFact
         if (userOpt.isEmpty()) {
             return "error/403";
         }
+        
+        User user = userOpt.get();
+        Optional<Product> originalProductOpt = productService.findById(id);
+        
+        if (originalProductOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Produto não encontrado");
+            return "redirect:/aventureiro/inventario";
+        }
+        
+        Product originalProduct = originalProductOpt.get();
+        
+        // MESTREs podem editar qualquer produto, outros usuários só os próprios
+        boolean isMaster = user.getRole() == UserRole.ROLE_MESTRE || user.getRole() == UserRole.ROLE_ADMIN;
+        boolean isOwner = originalProduct.getSeller().getId().equals(user.getId());
+        
+        if (!isMaster && !isOwner) {
+            return "error/403";
+        }
+        
         try {
             // Se uma nova imagem foi enviada, processa e atualiza o campo imageUrl
             if (image != null && !image.isEmpty()) {
                 String imageFilename = fileStorageService.storeFile(image);
                 product.setImageUrl(imageFilename);
             }
-            productService.update(id, product, userOpt.get());
-            redirectAttributes.addFlashAttribute("success", "Item atualizado com sucesso!");
+            
+            productService.update(id, product, user);
+            
+            String successMessage = isMaster && !isOwner ? 
+                "Item editado pelo MESTRE com sucesso!" : 
+                "Item atualizado com sucesso!";
+            redirectAttributes.addFlashAttribute("success", successMessage);
+            
+            if (isMaster && !isOwner) {
+                log.info("MESTRE {} editou anúncio {} (proprietário: {})", 
+                        user.getUsername(), product.getId(), originalProduct.getSeller().getUsername());
+            }
+            
         } catch (IOException e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao fazer upload da imagem: " + e.getMessage());
         } catch (IllegalArgumentException e) {
@@ -307,6 +362,7 @@ public class ProductController {    private static final Logger log = LoggerFact
     
     /**
      * Handles request to delete a product
+     * MESTREs podem excluir qualquer anúncio, outros usuários só podem excluir seus próprios
      */
     @PostMapping("/{id}/excluir")
     public String deleteProduct(@PathVariable String id, 
@@ -330,8 +386,21 @@ public class ProductController {    private static final Logger log = LoggerFact
             }
             
             Product product = productOpt.get();
-              // Check if current user is the seller
-            if (!product.getSeller().getId().equals(user.getId())) {  // Use user do userService
+              
+            // Verifica permissões: MESTREs podem excluir qualquer item, outros usuários só os próprios
+            boolean canDelete = false;
+            boolean isMaster = user.getRole() == UserRole.ROLE_MESTRE || user.getRole() == UserRole.ROLE_ADMIN;
+            boolean isOwner = product.getSeller().getId().equals(user.getId());
+            
+            if (isMaster) {
+                canDelete = true;
+                log.info("MESTRE {} excluindo anúncio {} (proprietário: {})", 
+                        user.getUsername(), product.getId(), product.getSeller().getUsername());
+            } else if (isOwner) {
+                canDelete = true;
+            }
+            
+            if (!canDelete) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Você não tem permissão para excluir este item");
                 return "redirect:/item/" + id;
             }
@@ -339,18 +408,81 @@ public class ProductController {    private static final Logger log = LoggerFact
             boolean result = productService.deleteProduct(product, user);  // Passa o user do userService
             
             if (result) {
-                String messageType = "Anúncio removido com sucesso";                if (product.getType() == ProductType.AUCTION && product.getStatus() == ProductStatus.AUCTION_ACTIVE) {
+                String messageType;
+                if (isMaster && !isOwner) {
+                    messageType = "Anúncio removido pelo MESTRE com sucesso";
+                } else if (product.getType() == ProductType.AUCTION && product.getStatus() == ProductStatus.AUCTION_ACTIVE) {
                     messageType = "Leilão encerrado e removido com sucesso";
+                } else {
+                    messageType = "Anúncio removido com sucesso";
                 }
                 redirectAttributes.addFlashAttribute("successMessage", messageType);
             } else {
                 redirectAttributes.addFlashAttribute("errorMessage", "Não foi possível remover o item");
             }
-              return "redirect:/aventureiro/inventario";
+            
+            // MESTREs são redirecionados para o painel de gestão de anúncios
+            if (isMaster && !isOwner) {
+                return "redirect:/mestre/gestao-anuncios";
+            }
+            
+            return "redirect:/aventureiro/inventario";
             
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao processar a exclusão: " + e.getMessage());
             return "redirect:/aventureiro/inventario";
+        }
+    }
+    
+    /**
+     * Endpoint específico para MESTREs excluírem produtos do mercado
+     */
+    @PostMapping("/{id}/excluir-mestre")
+    public String deleteProductFromMarket(@PathVariable String id, 
+                                        @AuthenticationPrincipal UserDetails currentUser,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            Optional<User> userOpt = userService.findByUsername(currentUser.getUsername());
+            
+            if (userOpt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Usuário não encontrado");
+                return "redirect:/mercado";
+            }
+            
+            User user = userOpt.get();
+            
+            // Verifica se é MESTRE
+            if (user.getRole() != UserRole.ROLE_MESTRE && user.getRole() != UserRole.ROLE_ADMIN) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Acesso negado. Apenas MESTREs podem usar esta função.");
+                return "redirect:/mercado";
+            }
+            
+            Optional<Product> productOpt = productService.findById(id);
+            
+            if (productOpt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Item não encontrado");
+                return "redirect:/mercado";
+            }
+            
+            Product product = productOpt.get();
+            
+            log.info("MESTRE {} excluindo anúncio {} do mercado (proprietário: {})", 
+                    user.getUsername(), product.getId(), product.getSeller().getUsername());
+            
+            boolean result = productService.deleteProduct(product, user);
+            
+            if (result) {
+                redirectAttributes.addFlashAttribute("successMessage", 
+                    "Anúncio removido do mercado pelo MESTRE com sucesso");
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", "Não foi possível remover o item");
+            }
+            
+            return "redirect:/mestre/gestao-anuncios";
+            
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao processar a exclusão: " + e.getMessage());
+            return "redirect:/mestre/gestao-anuncios";
         }
     }
     

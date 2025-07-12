@@ -14,6 +14,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -103,6 +105,50 @@ public class ProductService {
      */
     public Page<Product> search(String keyword, ProductStatus status, Pageable pageable) {
         return productRepository.searchByNameAndStatus(keyword, status, pageable);
+    }
+    
+    /**
+     * MÉTODO OTIMIZADO para busca com filtros múltiplos 
+     * Usado pelo painel do mestre para melhor performance
+     */
+    public Page<Product> findProductsWithFilters(ProductCategory category, ProductStatus status, 
+                                               ProductType type, String seller, Pageable pageable) {
+        
+        // Se nenhum filtro específico, usar busca simples
+        if (category == null && status == null && type == null && 
+            (seller == null || seller.trim().isEmpty())) {
+            return productRepository.findAll(pageable);
+        }
+        
+        // Usar MongoDB Template para query dinâmica otimizada
+        Query query = new Query();
+        
+        if (category != null) {
+            query.addCriteria(Criteria.where("category").is(category));
+        }
+        
+        if (status != null) {
+            query.addCriteria(Criteria.where("status").is(status));
+        }
+        
+        if (type != null) {
+            query.addCriteria(Criteria.where("type").is(type));
+        }
+        
+        if (seller != null && !seller.trim().isEmpty()) {
+            query.addCriteria(Criteria.where("seller.username").regex(seller, "i"));
+        }
+        
+        // Aplicar paginação e ordenação
+        query.with(pageable);
+        
+        // Executar a query
+        List<Product> produtos = mongoTemplate.find(query, Product.class);
+        
+        // Contar total para paginação
+        long total = mongoTemplate.count(query.skip(0).limit(0), Product.class);
+        
+        return new PageImpl<>(produtos, pageable, total);
     }
     
     /**

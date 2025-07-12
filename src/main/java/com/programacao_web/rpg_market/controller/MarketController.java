@@ -1,14 +1,12 @@
 package com.programacao_web.rpg_market.controller;
 
-import com.programacao_web.rpg_market.model.Product;
-import com.programacao_web.rpg_market.model.ProductCategory;
-import com.programacao_web.rpg_market.model.ItemRarity;
-import com.programacao_web.rpg_market.model.ProductStatus;
-import com.programacao_web.rpg_market.model.ProductType;
-import com.programacao_web.rpg_market.service.ProductService;
-import com.programacao_web.rpg_market.model.User;
-import com.programacao_web.rpg_market.service.UserService;
-import com.programacao_web.rpg_market.util.ClassCategoryPermission;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
@@ -17,20 +15,24 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import com.programacao_web.rpg_market.model.ItemRarity;
+import com.programacao_web.rpg_market.model.Product;
+import com.programacao_web.rpg_market.model.ProductCategory;
+import com.programacao_web.rpg_market.model.ProductStatus;
+import com.programacao_web.rpg_market.model.User;
+import com.programacao_web.rpg_market.model.UserRole;
+import com.programacao_web.rpg_market.service.ProductService;
+import com.programacao_web.rpg_market.service.UserService;
+import com.programacao_web.rpg_market.util.ClassCategoryPermission;
 
 @Controller
 @RequestMapping("/mercado")
@@ -54,32 +56,45 @@ public class MarketController {
         // Obter usuário logado
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String characterClass = null;
-        if (auth != null && auth.isAuthenticated() && !(auth.getPrincipal() instanceof String)) {
-            Object principal = auth.getPrincipal();
-            if (principal instanceof com.programacao_web.rpg_market.service.CustomUserDetailsService.CustomUserDetails) {
-                characterClass = ((com.programacao_web.rpg_market.service.CustomUserDetailsService.CustomUserDetails) principal).getCharacterClass();
-            } else {
-                String username = auth.getName();
-                Optional<User> userOpt = userService.findByUsername(username);
-                if (userOpt.isPresent()) {
-                    characterClass = userOpt.get().getCharacterClass();
-                }
-            }
-        }        if (characterClass != null) characterClass = capitalize(characterClass.trim());
-        Set<ProductCategory> allowedCategories = ClassCategoryPermission.getAllowedCategories(characterClass);
+        boolean isMaster = false;
         
-        // Produtos de venda direta disponíveis - filtrados por classe de usuário
+        if (auth != null && auth.isAuthenticated() && !(auth.getPrincipal() instanceof String)) {
+            String username = auth.getName();
+            Optional<User> userOpt = userService.findByUsername(username);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                characterClass = user.getCharacterClass();
+                UserRole userRole = user.getRole();
+                isMaster = userRole == UserRole.ROLE_MESTRE || userRole == UserRole.ROLE_ADMIN;
+            }
+        }        
+        if (characterClass != null) characterClass = capitalize(characterClass.trim());
+        
+        // MESTREs podem ver todas as categorias
+        Set<ProductCategory> allowedCategories;
+        if (isMaster) {
+            allowedCategories = EnumSet.allOf(ProductCategory.class);
+        } else {
+            allowedCategories = ClassCategoryPermission.getAllowedCategories(characterClass);
+        }
+        
+        // Produtos de venda direta disponíveis - filtrados por permissões do usuário
         List<Product> productsList = new ArrayList<>(productService.findAvailable(productPageable).getContent());
-        productsList.removeIf(p -> p.getCategory() == null || !allowedCategories.contains(p.getCategory()));
+        if (!isMaster) {
+            productsList.removeIf(p -> p.getCategory() == null || !allowedCategories.contains(p.getCategory()));
+        }
         model.addAttribute("products", productsList);
         
         // Leilões ativos filtrados
         List<Product> auctionsList = new ArrayList<>(productService.findActiveAuctions(auctionPageable).getContent());
-        auctionsList.removeIf(a -> a.getCategory() == null || !allowedCategories.contains(a.getCategory()));
+        if (!isMaster) {
+            auctionsList.removeIf(a -> a.getCategory() == null || !allowedCategories.contains(a.getCategory()));
+        }
         model.addAttribute("auctions", auctionsList);
         
         // Categorias permitidas para navegação
         model.addAttribute("categories", allowedCategories);
+        model.addAttribute("isMaster", isMaster);
         return "market/index";
     }
     
@@ -90,9 +105,36 @@ public class MarketController {
             Model model,
             @PageableDefault(size = 12) Pageable pageable) {
         
+        // Obter usuário logado e verificar se é MESTRE
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String characterClass = null;
+        boolean isMaster = false;
+        
+        if (auth != null && auth.isAuthenticated() && !(auth.getPrincipal() instanceof String)) {
+            String username = auth.getName();
+            Optional<User> userOpt = userService.findByUsername(username);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                characterClass = user.getCharacterClass();
+                UserRole userRole = user.getRole();
+                isMaster = userRole == UserRole.ROLE_MESTRE || userRole == UserRole.ROLE_ADMIN;
+            }
+        }
+        
+        if (characterClass != null) characterClass = capitalize(characterClass.trim());
+        
+        // MESTREs podem ver todas as categorias
+        Set<ProductCategory> allowedCategories;
+        if (isMaster) {
+            allowedCategories = EnumSet.allOf(ProductCategory.class);
+        } else {
+            allowedCategories = ClassCategoryPermission.getAllowedCategories(characterClass);
+        }
+        
         model.addAttribute("products", productService.findByCategory(category, pageable));
         model.addAttribute("currentCategory", category);
-        model.addAttribute("categories", ProductCategory.values());
+        model.addAttribute("categories", allowedCategories); // Usar categorias permitidas, não todas
+        model.addAttribute("isMaster", isMaster);
         return "market/category";
     }
     
@@ -103,15 +145,57 @@ public class MarketController {
             Model model,
             @PageableDefault(size = 12) Pageable pageable) {
         
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            model.addAttribute("products", 
-                    productService.search(keyword, ProductStatus.AVAILABLE, pageable));
-            model.addAttribute("keyword", keyword);
-        } else {
-            model.addAttribute("products", productService.findAvailable(pageable));
+        // Obter usuário logado e verificar se é MESTRE
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String characterClass = null;
+        boolean isMaster = false;
+        
+        if (auth != null && auth.isAuthenticated() && !(auth.getPrincipal() instanceof String)) {
+            String username = auth.getName();
+            Optional<User> userOpt = userService.findByUsername(username);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                characterClass = user.getCharacterClass();
+                UserRole userRole = user.getRole();
+                isMaster = userRole == UserRole.ROLE_MESTRE || userRole == UserRole.ROLE_ADMIN;
+            }
         }
         
-        model.addAttribute("categories", ProductCategory.values());
+        if (characterClass != null) characterClass = capitalize(characterClass.trim());
+        
+        // MESTREs podem ver todas as categorias
+        Set<ProductCategory> allowedCategories;
+        if (isMaster) {
+            allowedCategories = EnumSet.allOf(ProductCategory.class);
+        } else {
+            allowedCategories = ClassCategoryPermission.getAllowedCategories(characterClass);
+        }
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            Page<Product> searchResults = productService.search(keyword, ProductStatus.AVAILABLE, pageable);
+            List<Product> filteredResults = new ArrayList<>(searchResults.getContent());
+            
+            // MESTREs podem ver todos os resultados, outros usuários têm filtros por categoria
+            if (!isMaster) {
+                filteredResults.removeIf(p -> p.getCategory() == null || !allowedCategories.contains(p.getCategory()));
+            }
+            
+            model.addAttribute("products", new PageImpl<>(filteredResults, pageable, filteredResults.size()));
+            model.addAttribute("keyword", keyword);
+        } else {
+            Page<Product> availableProducts = productService.findAvailable(pageable);
+            List<Product> filteredProducts = new ArrayList<>(availableProducts.getContent());
+            
+            // MESTREs podem ver todos os produtos, outros usuários têm filtros por categoria
+            if (!isMaster) {
+                filteredProducts.removeIf(p -> p.getCategory() == null || !allowedCategories.contains(p.getCategory()));
+            }
+            
+            model.addAttribute("products", new PageImpl<>(filteredProducts, pageable, filteredProducts.size()));
+        }
+        
+        model.addAttribute("categories", allowedCategories); // Usar categorias permitidas, não todas
+        model.addAttribute("isMaster", isMaster);
         return "market/search";
     }
     
@@ -126,23 +210,32 @@ public class MarketController {
             @RequestParam(required = false, defaultValue = "auctionEndDate,asc") String sort,
             Model model,
             @PageableDefault(size = 12) Pageable pageable) {
-        // Obter usuário logado
+        // Obter usuário logado e verificar se é MESTRE
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String characterClass = null;
+        boolean isMaster = false;
+        
         if (auth != null && auth.isAuthenticated() && !(auth.getPrincipal() instanceof String)) {
-            Object principal = auth.getPrincipal();
-            if (principal instanceof com.programacao_web.rpg_market.service.CustomUserDetailsService.CustomUserDetails) {
-                characterClass = ((com.programacao_web.rpg_market.service.CustomUserDetailsService.CustomUserDetails) principal).getCharacterClass();
-            } else {
-                String username = auth.getName();
-                Optional<User> userOpt = userService.findByUsername(username);
-                if (userOpt.isPresent()) {
-                    characterClass = userOpt.get().getCharacterClass();
-                }
+            String username = auth.getName();
+            Optional<User> userOpt = userService.findByUsername(username);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                characterClass = user.getCharacterClass();
+                UserRole userRole = user.getRole();
+                isMaster = userRole == UserRole.ROLE_MESTRE || userRole == UserRole.ROLE_ADMIN;
             }
         }
+        
         if (characterClass != null) characterClass = capitalize(characterClass.trim());
-        Set<ProductCategory> allowedCategories = ClassCategoryPermission.getAllowedCategories(characterClass);
+        
+        // MESTREs podem ver todas as categorias
+        Set<ProductCategory> allowedCategories;
+        if (isMaster) {
+            allowedCategories = EnumSet.allOf(ProductCategory.class);
+        } else {
+            allowedCategories = ClassCategoryPermission.getAllowedCategories(characterClass);
+        }
+        
         // Processar parâmetros de ordenação
         String[] sortParams = sort.split(",");
         String sortField = sortParams[0];
@@ -157,10 +250,17 @@ public class MarketController {
         // Usar o novo método de filtro
         List<Product> auctionsList = new ArrayList<>(productService.findAuctionsWithFilters(
             category, rarity, minPrice, maxPrice, endingSoon, pageRequest).getContent());
-        auctionsList.removeIf(a -> a.getCategory() == null || !allowedCategories.contains(a.getCategory()));
-        Page<Product> auctions = new PageImpl<>(auctionsList, pageRequest, auctionsList.size());        model.addAttribute("auctions", auctions);
+        
+        // MESTREs podem ver todos os leilões, outros usuários têm filtros por categoria
+        if (!isMaster) {
+            auctionsList.removeIf(a -> a.getCategory() == null || !allowedCategories.contains(a.getCategory()));
+        }
+        
+        Page<Product> auctions = new PageImpl<>(auctionsList, pageRequest, auctionsList.size());
+        model.addAttribute("auctions", auctions);
         model.addAttribute("categories", allowedCategories);
         model.addAttribute("rarities", com.programacao_web.rpg_market.model.ProductRarity.values());
+        model.addAttribute("isMaster", isMaster);
         return "market/auctions";
     }
     
@@ -186,20 +286,28 @@ public class MarketController {
         // Obter usuário logado e suas permissões de classe
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String characterClass = null;
+        boolean isMaster = false;
+        
         if (auth != null && auth.isAuthenticated() && !(auth.getPrincipal() instanceof String)) {
-            Object principal = auth.getPrincipal();
-            if (principal instanceof com.programacao_web.rpg_market.service.CustomUserDetailsService.CustomUserDetails) {
-                characterClass = ((com.programacao_web.rpg_market.service.CustomUserDetailsService.CustomUserDetails) principal).getCharacterClass();
-            } else {
-                String username = auth.getName();
-                Optional<User> userOpt = userService.findByUsername(username);
-                if (userOpt.isPresent()) {
-                    characterClass = userOpt.get().getCharacterClass();
-                }
+            String username = auth.getName();
+            Optional<User> userOpt = userService.findByUsername(username);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                characterClass = user.getCharacterClass();
+                UserRole userRole = user.getRole();
+                isMaster = userRole == UserRole.ROLE_MESTRE || userRole == UserRole.ROLE_ADMIN;
             }
         }
+        
         if (characterClass != null) characterClass = capitalize(characterClass.trim());
-        Set<ProductCategory> allowedCategories = ClassCategoryPermission.getAllowedCategories(characterClass);
+        
+        // MESTREs podem ver todas as categorias
+        Set<ProductCategory> allowedCategories;
+        if (isMaster) {
+            allowedCategories = EnumSet.allOf(ProductCategory.class);
+        } else {
+            allowedCategories = ClassCategoryPermission.getAllowedCategories(characterClass);
+        }
 
         // Filtrar produtos de venda direta (não leilões)
         Page<Product> productsPage = productService.findDirectSalesWithFilters(
@@ -210,14 +318,18 @@ public class MarketController {
             pageable
         );
         
-        // Filtrar produtos pela classe do usuário
+        // MESTREs podem ver todos os produtos, outros usuários têm filtros por categoria
         List<Product> productsList = new ArrayList<>(productsPage.getContent());
-        productsList.removeIf(p -> p.getCategory() == null || !allowedCategories.contains(p.getCategory()));
+        if (!isMaster) {
+            productsList.removeIf(p -> p.getCategory() == null || !allowedCategories.contains(p.getCategory()));
+        }
+        
         Page<Product> filteredProductsPage = new PageImpl<>(productsList, pageable, productsList.size());
         
         model.addAttribute("products", filteredProductsPage);
         model.addAttribute("categories", allowedCategories); // Mostra apenas categorias permitidas
         model.addAttribute("rarities", ItemRarity.values());
+        model.addAttribute("isMaster", isMaster);
         
         return "market/direct-sales";
     }
