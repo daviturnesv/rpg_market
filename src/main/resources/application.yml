@@ -24,6 +24,11 @@ spring:
       database: Cluster0
       uri: mongodb+srv://admin:batata123@cluster0.clcxyly.mongodb.net/?
 
+  # Configuração para ignorar favicon
+  mvc:
+    favicon:
+      enabled: false
+
 server:
   error:
     whitelabel:

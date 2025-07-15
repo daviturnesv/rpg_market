@@ -21,10 +21,6 @@ public class HealthController {
         return ResponseEntity.ok(status);
     }
 
-    @GetMapping("/")
-    public ResponseEntity<Void> root() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(URI.create("/mercado"));
-        return new ResponseEntity<>(headers, HttpStatus.FOUND);
-    }
+    // Removido o mapeamento duplicado da rota raiz
+    // O MarketController já gerencia a navegação principal
 }

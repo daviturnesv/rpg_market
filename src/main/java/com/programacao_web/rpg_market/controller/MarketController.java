@@ -35,7 +35,6 @@ import com.programacao_web.rpg_market.service.UserService;
 import com.programacao_web.rpg_market.util.ClassCategoryPermission;
 
 @Controller
-@RequestMapping("/mercado")
 public class MarketController {
 
     @Autowired
@@ -44,8 +43,14 @@ public class MarketController {
     @Autowired
     private UserService userService;
     
+    // Rota raiz - redireciona para o mercado
+    @GetMapping("/")
+    public String redirectToMarket() {
+        return "redirect:/mercado";
+    }
+    
     // Página principal do mercado
-    @GetMapping
+    @GetMapping("/mercado")
     public String showMarketplace(
             Model model, 
             @Qualifier("products") @PageableDefault(size = 6, sort = "createdAt", direction = Sort.Direction.DESC) 

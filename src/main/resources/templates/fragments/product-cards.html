@@ -21,7 +21,7 @@
 
 <div th:fragment="direct-sale-card(product)" class="col-md-6 col-lg-4">
     <div class="card h-100 product-card">
-        <div th:replace="fragments/product-cards :: product-image(${product.imageUrl}, ${product.name})"></div>
+        <div th:replace="~{fragments/product-cards :: product-image(${product.imageUrl}, ${product.name})}"></div>
 
             <span class="badge product-category-badge bg-dark position-absolute end-0 top-0 m-2" 
                   th:text="${product.category != null ? product.category.displayName : 'Sem categoria'}">Categoria</span>
@@ -67,7 +67,7 @@
 <!-- Fragment para Card de Leilão -->
 <div th:fragment="auction-card(auction)" class="col-md-6 col-lg-4">
     <div class="card h-100 product-card auction-item">
-        <div th:replace="fragments/product-cards :: product-image(${auction.imageUrl}, ${auction.name})"></div>
+        <div th:replace="~{fragments/product-cards :: product-image(${auction.imageUrl}, ${auction.name})}"></div>
 
             <span class="badge product-category-badge bg-dark position-absolute end-0 top-0 m-2" 
                   th:text="${auction.category != null ? auction.category.displayName : 'Sem categoria'}">Categoria</span>
@@ -137,7 +137,7 @@
 <!-- Card de Venda Direta sem badge de tipo -->
 <div th:fragment="direct-sale-card-no-badge(product)" class="col-md-6 col-lg-4">
     <div class="card h-100 product-card">
-        <div th:replace="fragments/product-cards :: product-image(${product.imageUrl}, ${product.name})"></div>
+        <div th:replace="~{fragments/product-cards :: product-image(${product.imageUrl}, ${product.name})}"></div>
 
             <span class="badge product-category-badge bg-dark position-absolute end-0 top-0 m-2" 
                   th:text="${product.category != null ? product.category.displayName : 'Sem categoria'}">Categoria</span>
@@ -179,7 +179,7 @@
 <!-- Fragment para Card de Leilão (sem badge vermelho - para página específica) -->
 <div th:fragment="auction-card-no-badge(auction)" class="col-md-6 col-lg-4">
     <div class="card h-100 product-card auction-item">
-        <div th:replace="fragments/product-cards :: product-image(${auction.imageUrl}, ${auction.name})"></div>
+        <div th:replace="~{fragments/product-cards :: product-image(${auction.imageUrl}, ${auction.name})}"></div>
 
             <span class="badge product-category-badge bg-dark position-absolute end-0 top-0 m-2"
                   th:text="${auction.category != null ? auction.category.displayName : 'Sem categoria'}">Categoria</span>
